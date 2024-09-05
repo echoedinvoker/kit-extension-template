@@ -11,3 +11,5 @@ _*/
 
 /app
 venv
+
+exts/agv/agv/.vscode
