@@ -41,51 +41,66 @@ class StageManager:
             self.setup()
         return self.context
 
+class ActionGraphManager:
+    def __init__(self, data_path_manager):
+        self._data_path_manager = data_path_manager
+
+    def create_action_graph(self):
+        graph_path = f"/control_center_graph"
+        keys = og.Controller.Keys
+        (graph_handle, list_of_nodes, _, _) = og.Controller.edit(
+            {"graph_path": graph_path, "evaluator_name": "execution"},
+            {
+                keys.CREATE_NODES: [
+                    ("on_playback_tick", "omni.graph.action.OnPlaybackTick"),
+                    ("script_node", "omni.graph.scriptnode.ScriptNode"),
+                ],
+                keys.SET_VALUES: [
+                    ("script_node.inputs:usePath", True),
+                    ("script_node.inputs:scriptPath", os.path.join(self._data_path_manager.get_extension_data_path(), "control_center.py")),
+                ],
+                keys.CONNECT: [
+                    ("on_playback_tick.outputs:tick", "script_node.inputs:execIn"),
+                ]
+            }
+        )
+
+class SceneElementsManager:
+    def __init__(self, stage_manager, data_path_manager):
+        self._stage_manager = stage_manager
+        self._data_path_manager = data_path_manager
+
+    def create_ground_plane(self):
+        omni.kit.commands.execute('AddGroundPlaneCommand',
+                                  stage=self._stage_manager.get_stage(),
+                                  planePath='/GroundPlane',
+                                  axis='Z',
+                                  size=2500.0,
+                                  position=Gf.Vec3f(0.0, 0.0, 0.0),
+                                  color=Gf.Vec3f(0.5, 0.5, 0.5)
+                                  )
+
+    def create_payload(self):
+        omni.kit.commands.execute('CreatePayload',
+                                  usd_context=self._stage_manager.get_context(),
+                                  path_to='/World/cast_AGV31',
+                                  asset_path=os.path.join(self._data_path_manager.get_extension_data_path(), 'cast_AGV31.usdz'),
+                                  )
 class MyExtension(omni.ext.IExt):
     def on_startup(self, ext_id):
         print("[omni.hello.world] MyExtension startup")
         self._data_path_manager = ExtensionDataPathManager()
         self._stage_manager = StageManager()
+        self._action_graph_manager = ActionGraphManager(self._data_path_manager)
+        self._scene_elements_manager = SceneElementsManager(self._stage_manager, self._data_path_manager)
 
         self._window = ui.Window("My Window", width=300, height=300)
         with self._window.frame:
             with ui.VStack():
-                # label = ui.Label("")
-
                 def on_click():
-                    omni.kit.commands.execute('AddGroundPlaneCommand',
-                                            stage=self._stage_manager.get_stage(),
-                                            planePath='/GroundPlane',
-                                            axis='Z',
-                                            size=2500.0,
-                                            position=Gf.Vec3f(0.0, 0.0, 0.0),
-                                            color=Gf.Vec3f(0.5, 0.5, 0.5)
-                                              )
-                    omni.kit.commands.execute('CreatePayload',
-                                            usd_context=self._stage_manager.get_context(),
-                                            path_to='/World/cast_AGV31',
-                                            asset_path=os.path.join(self._data_path_manager.get_extension_data_path(), 'cast_AGV31.usdz'),
-                                              )
-
-                    graph_path = f"/control_center_graph"
-                    keys = og.Controller.Keys
-                    (graph_handle, list_of_nodes, _, _) = og.Controller.edit(
-                        {"graph_path": graph_path, "evaluator_name": "execution"},
-                        {
-                            keys.CREATE_NODES: [
-                                ("on_playback_tick", "omni.graph.action.OnPlaybackTick"),
-                                ("script_node", "omni.graph.scriptnode.ScriptNode"),
-                            ],
-                            keys.SET_VALUES: [
-                                ("script_node.inputs:usePath", True),
-                                ("script_node.inputs:scriptPath", os.path.join(self._data_path_manager.get_extension_data_path(), "control_center.py")),
-                            ],
-                            keys.CONNECT: [
-                                ("on_playback_tick.outputs:tick", "script_node.inputs:execIn"),
-                            ]
-                        }
-                    )
-
+                    self._scene_elements_manager.create_ground_plane()
+                    self._scene_elements_manager.create_payload()
+                    self._action_graph_manager.create_action_graph()
 
                 with ui.HStack():
                     ui.Button("Init", clicked_fn=on_click)
