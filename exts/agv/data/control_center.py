@@ -1,19 +1,30 @@
 from paho.mqtt import client as mqtt_client
 
-def start_mqtt_client(host, port, db):
-    def on_message(client, userdata, message):
+class MQTTClient:
+    def __init__(self, host, port, db):
+        self.host = host
+        self.port = port
+        self.db = db
+        self.client = None
+
+    def on_message(self, client, userdata, message):
         payload = message.payload.decode()
         if payload == "stop_conveyor":
-            db.internal_state.stop_conveyor_flag = True
+            self.db.internal_state.stop_conveyor_flag = True
         elif payload == "activate_conveyor":
-            db.internal_state.activate_conveyor_flag = True
+            self.db.internal_state.activate_conveyor_flag = True
 
-    client = mqtt_client.Client()
-    client.on_message = on_message
-    client.connect(host, port)
-    client.subscribe("conveyor/commands")
-    client.loop_start()
-    return client
+    def start(self):
+        self.client = mqtt_client.Client()
+        self.client.on_message = self.on_message
+        self.client.connect(self.host, self.port)
+        self.client.subscribe("conveyor/commands")
+        self.client.loop_start()
+
+    def stop(self):
+        if self.client:
+            self.client.loop_stop()
+            self.client.disconnect()
 
 def setup(db: og.Database):
     state = db.internal_state
@@ -30,15 +41,15 @@ def setup(db: og.Database):
 
 def cleanup(db: og.Database):
     if db.internal_state.mqtt_client:
-        db.internal_state.mqtt_client.loop_stop()
-        db.internal_state.mqtt_client.disconnect()
+        db.internal_state.mqtt_client.stop()
 
 def compute(db: og.Database):
     state = db.internal_state
 
     if not state.mqtt_flag:
         state.mqtt_flag = True
-        state.mqtt_client = start_mqtt_client(state.mqtt_host, state.mqtt_port, db)
+        state.mqtt_client = MQTTClient(state.mqtt_host, state.mqtt_port, db)
+        state.mqtt_client.start()
 
     if state.stop_conveyor_flag:
         db.outputs.is_stop = True
@@ -53,4 +64,3 @@ def compute(db: og.Database):
         db.outputs.is_activate = False
 
     return True
-
