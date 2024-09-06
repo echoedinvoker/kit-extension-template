@@ -14,7 +14,7 @@ def some_public_function(x: int):
 # on_shutdown() is called.
 class ExtensionDataPathManager:
     def __init__(self):
-        manager = omni.kit.app.get_extension_manager()
+        manager = omni.kit.app.get_app().get_extension_manager()
         self.extension_data_path = os.path.join(manager.get_extension_path_by_module("agv"), "data")
 
     def get_extension_data_path(self):
@@ -22,20 +22,29 @@ class ExtensionDataPathManager:
 
 class StageManager:
     def __init__(self):
-        self.stage = omni.usd.get_context().get_stage()
-
-    def setup_stage(self):
+        self.context = None
+        self.stage = None
+    
+    def setup(self):
+        self.context = omni.usd.get_context()
+        self.stage = self.context.get_stage()
         UsdGeom.SetStageMetersPerUnit(self.stage, 0.01)
 
     def get_stage(self):
+        if self.stage is None:
+            self.setup()
         return self.stage
+
+    def get_context(self):
+        if self.context is None:
+            self.setup()
+        return self.context
 
 class MyExtension(omni.ext.IExt):
     def on_startup(self, ext_id):
         print("[omni.hello.world] MyExtension startup")
         self._data_path_manager = ExtensionDataPathManager()
         self._stage_manager = StageManager()
-        self._stage_manager.setup_stage()
 
         self._window = ui.Window("My Window", width=300, height=300)
         with self._window.frame:
@@ -52,7 +61,7 @@ class MyExtension(omni.ext.IExt):
                                             color=Gf.Vec3f(0.5, 0.5, 0.5)
                                               )
                     omni.kit.commands.execute('CreatePayload',
-                                            usd_context=omni.usd.get_context(),
+                                            usd_context=self._stage_manager.get_context(),
                                             path_to='/World/cast_AGV31',
                                             asset_path=os.path.join(self._data_path_manager.get_extension_data_path(), 'cast_AGV31.usdz'),
                                               )
