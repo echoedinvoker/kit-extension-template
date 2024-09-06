@@ -10,34 +10,30 @@ def some_public_function(x: int):
 # Any class derived from `omni.ext.IExt` in top level module (defined in `python.modules` of `extension.toml`) will be
 # instantiated when extension gets enabled and `on_startup(ext_id)` will be called. Later when extension gets disabled
 # on_shutdown() is called.
+class ExtensionDataPathManager:
+    def __init__(self):
+        manager = omni.kit.app.get_app().get_extension_manager()
+        self.extension_data_path = os.path.join(manager.get_extension_path_by_module("agv"), "data")
+
+    def get_extension_data_path(self):
+        return self.extension_data_path
+
 class MyExtension(omni.ext.IExt):
-    # ext_id is current extension id. It can be used with extension manager to query additional information, like where
-    # this extension is located on filesystem.
     def on_startup(self, ext_id):
         print("[omni.hello.world] MyExtension startup")
-        manager = omni.kit.app.get_app().get_extension_manager()
-        extension_data_path = os.path.join(manager.get_extension_path_by_module("agv"), "data")
-
-        self._count = 0
+        self._data_path_manager = ExtensionDataPathManager()
 
         self._window = ui.Window("My Window", width=300, height=300)
         with self._window.frame:
             with ui.VStack():
                 label = ui.Label("")
-                
 
                 def on_click():
-                    print(extension_data_path)
+                    print(self._data_path_manager.get_extension_data_path())
 
-                def on_reset():
-                    self._count = 0
-                    label.text = "empty"
-
-                on_reset()
 
                 with ui.HStack():
-                    ui.Button("Add 1", clicked_fn=on_click)
-                    ui.Button("Reset", clicked_fn=on_reset)
+                    ui.Button("Init", clicked_fn=on_click)
 
     def on_shutdown(self):
         print("[omni.hello.world] MyExtension shutdown")
