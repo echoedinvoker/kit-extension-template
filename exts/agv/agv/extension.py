@@ -71,13 +71,10 @@ class SceneElementsManager:
         self._data_path_manager = data_path_manager
 
     def create_ground_plane(self):
-        omni.kit.commands.execute('AddGroundPlaneCommand',
-                                  stage=self._stage_manager.get_stage(),
-                                  planePath='/GroundPlane',
-                                  axis='Z',
-                                  size=2500.0,
-                                  position=Gf.Vec3f(0.0, 0.0, 0.0),
-                                  color=Gf.Vec3f(0.5, 0.5, 0.5)
+        omni.kit.commands.execute('CreatePayload',
+                                  usd_context=self._stage_manager.get_context(),
+                                  path_to='/World/GroundPlane',
+                                  asset_path=os.path.join(self._data_path_manager.get_extension_data_path(), 'GroundPlane.usd'),
                                   )
 
     def create_payload(self):
