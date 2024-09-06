@@ -26,6 +26,10 @@ class MQTTClient:
             self.client.loop_stop()
             self.client.disconnect()
 
+    def publish(self, topic, message):
+        if self.client:
+            self.client.publish(topic, message)
+
 def setup(db: og.Database):
     state = db.internal_state
 
@@ -62,5 +66,9 @@ def compute(db: og.Database):
         state.activate_conveyor_flag = False
     else:
         db.outputs.is_activate = False
+
+    # Publish location data
+    if state.mqtt_client:
+        state.mqtt_client.publish("location", str(db.inputs.location))
 
     return True
