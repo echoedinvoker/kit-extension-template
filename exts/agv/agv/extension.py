@@ -1,5 +1,6 @@
 import omni.ext
 import omni.ui as ui
+import os
 
 # Functions and vars are available to other extension as usual in python: `example.python_ext.some_public_function(x)`
 def some_public_function(x: int):
@@ -14,6 +15,8 @@ class MyExtension(omni.ext.IExt):
     # this extension is located on filesystem.
     def on_startup(self, ext_id):
         print("[omni.hello.world] MyExtension startup")
+        manager = omni.kit.app.get_app().get_extension_manager()
+        extension_data_path = os.path.join(manager.get_extension_path_by_module("agv"), "data")
 
         self._count = 0
 
@@ -24,8 +27,7 @@ class MyExtension(omni.ext.IExt):
                 
 
                 def on_click():
-                    self._count += 1
-                    label.text = f"count: {self._count}"
+                    print(extension_data_path)
 
                 def on_reset():
                     self._count = 0
