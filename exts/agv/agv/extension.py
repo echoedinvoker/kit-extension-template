@@ -3,6 +3,7 @@ import omni.ui as ui
 import os
 import omni.kit.commands
 from pxr import Gf, UsdGeom
+import omni.graph.core as og
 
 # Functions and vars are available to other extension as usual in python: `example.python_ext.some_public_function(x)`
 def some_public_function(x: int):
@@ -66,6 +67,24 @@ class MyExtension(omni.ext.IExt):
                                             asset_path=os.path.join(self._data_path_manager.get_extension_data_path(), 'cast_AGV31.usdz'),
                                               )
 
+                    graph_path = f"/control_center_graph"
+                    keys = og.Controller.Keys
+                    (graph_handle, list_of_nodes, _, _) = og.Controller.edit(
+                        {"graph_path": graph_path, "evaluator_name": "execution"},
+                        {
+                            keys.CREATE_NODES: [
+                                ("on_playback_tick", "omni.graph.action.OnPlaybackTick"),
+                                ("script_node", "omni.graph.scriptnode.ScriptNode"),
+                            ],
+                            keys.SET_VALUES: [
+                                ("script_node.inputs:usePath", True),
+                                ("script_node.inputs:scriptPath", os.path.join(self._data_path_manager.get_extension_data_path(), "control_center.py")),
+                            ],
+                            keys.CONNECT: [
+                                ("on_playback_tick.outputs:tick", "script_node.inputs:execIn"),
+                            ]
+                        }
+                    )
 
 
                 with ui.HStack():
