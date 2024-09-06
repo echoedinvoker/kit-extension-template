@@ -13,3 +13,5 @@ _*/
 venv
 
 exts/agv/agv/.vscode
+
+exts/agv/data/cast_AGV31.usdz
