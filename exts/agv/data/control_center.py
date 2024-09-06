@@ -1,4 +1,5 @@
 from paho.mqtt import client as mqtt_client
+import time
 
 class MQTTClient:
     def __init__(self, host, port, db):
@@ -6,6 +7,7 @@ class MQTTClient:
         self.port = port
         self.db = db
         self.client = None
+        self.last_publish_time = {}
 
     def on_message(self, client, userdata, message):
         payload = message.payload.decode()
@@ -26,10 +28,12 @@ class MQTTClient:
             self.client.loop_stop()
             self.client.disconnect()
 
-    def publish(self, topic, message):
+    def publish(self, topic, message, interval=1):
         if self.client:
-            self.client.publish(topic, message)
-
+            current_time = time.time()
+            if topic not in self.last_publish_time or current_time - self.last_publish_time[topic] >= interval:
+                self.client.publish(topic, message)
+                self.last_publish_time[topic] = current_time
 def setup(db: og.Database):
     state = db.internal_state
 
