@@ -14,18 +14,28 @@ def some_public_function(x: int):
 # on_shutdown() is called.
 class ExtensionDataPathManager:
     def __init__(self):
-        manager = omni.kit.app.get_app().get_extension_manager()
+        manager = omni.kit.app.get_extension_manager()
         self.extension_data_path = os.path.join(manager.get_extension_path_by_module("agv"), "data")
 
     def get_extension_data_path(self):
         return self.extension_data_path
 
+class StageManager:
+    def __init__(self):
+        self.stage = omni.usd.get_context().get_stage()
+
+    def setup_stage(self):
+        UsdGeom.SetStageMetersPerUnit(self.stage, 0.01)
+
+    def get_stage(self):
+        return self.stage
+
 class MyExtension(omni.ext.IExt):
     def on_startup(self, ext_id):
         print("[omni.hello.world] MyExtension startup")
         self._data_path_manager = ExtensionDataPathManager()
-        stage = omni.usd.get_context().get_stage()
-        UsdGeom.SetStageMetersPerUnit(stage, 0.01)
+        self._stage_manager = StageManager()
+        self._stage_manager.setup_stage()
 
         self._window = ui.Window("My Window", width=300, height=300)
         with self._window.frame:
@@ -34,7 +44,7 @@ class MyExtension(omni.ext.IExt):
 
                 def on_click():
                     omni.kit.commands.execute('AddGroundPlaneCommand',
-                                            stage=stage,
+                                            stage=self._stage_manager.get_stage(),
                                             planePath='/GroundPlane',
                                             axis='Z',
                                             size=2500.0,
