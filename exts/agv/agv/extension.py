@@ -45,7 +45,7 @@ class ActionGraphManager:
     def __init__(self, data_path_manager):
         self._data_path_manager = data_path_manager
 
-    def create_action_graph(self):
+    def create_control_center_graph(self):
         graph_path = f"/control_center_graph"
         keys = og.Controller.Keys
         (graph_handle, list_of_nodes, _, _) = og.Controller.edit(
@@ -62,6 +62,37 @@ class ActionGraphManager:
                 keys.CONNECT: [
                     ("on_playback_tick.outputs:tick", "script_node.inputs:execIn"),
                 ]
+            }
+        )
+
+    # new action graph to read AGV's properties
+    def create_agv_properties_graph(self):
+        graph_path = f"/agv_properties_graph"
+        keys = og.Controller.Keys
+        (graph_handle, list_of_nodes, _, _) = og.Controller.edit(
+            {"graph_path": graph_path, "evaluator_name": "execution"},
+            {
+            keys.CREATE_NODES: [
+                ("on_playback_tick", "omni.graph.action.OnPlaybackTick"),
+                ("script_node", "omni.graph.scriptnode.ScriptNode"),
+                ("AGV_prim_path", "omni.graph.nodes.GetPrimPath"),
+                ("AGV_orient", "omni.graph.nodes.ReadPrimAttribute"),
+            ],
+            keys.CREATE_ATTRIBUTES: [
+                ("script_node.inputs:orient", "float[4]"),
+            ],
+            keys.SET_VALUES: [
+                ("script_node.inputs:usePath", True),
+                ("script_node.inputs:scriptPath", os.path.join(self._data_path_manager.get_extension_data_path(), "orient.py")),
+                ("AGV_prim_path.inputs:prim", "/World/cast_AGV31/cast_AGV3/Geometry/cast_AGV2_TOP_0/_1MD7BBK040_1_36/_1MD7BBK050_1_311"),
+                ("AGV_orient.inputs:usePath", True),
+                ("AGV_orient.inputs:name", "xformOp:orient"),
+            ],
+            keys.CONNECT: [
+                ("on_playback_tick.outputs:tick", "script_node.inputs:execIn"),
+                ("AGV_prim_path.outputs:primPath", "AGV_orient.inputs:primPath"),
+                ("AGV_orient.outputs:value", "script_node.inputs:orient"),
+            ]
             }
         )
 
@@ -83,6 +114,7 @@ class SceneElementsManager:
                                   path_to='/World/cast_AGV31',
                                   asset_path=os.path.join(self._data_path_manager.get_extension_data_path(), 'cast_AGV31.usdz'),
                                   )
+
 class MyExtension(omni.ext.IExt):
     def on_startup(self, ext_id):
         print("[omni.hello.world] MyExtension startup")
@@ -97,7 +129,8 @@ class MyExtension(omni.ext.IExt):
                 def on_click():
                     self._scene_elements_manager.create_ground_plane()
                     self._scene_elements_manager.create_payload()
-                    self._action_graph_manager.create_action_graph()
+                    self._action_graph_manager.create_control_center_graph()
+                    self._action_graph_manager.create_agv_properties_graph()
 
                 with ui.HStack():
                     ui.Button("Init", clicked_fn=on_click)

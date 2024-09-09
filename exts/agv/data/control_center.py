@@ -69,6 +69,7 @@ def compute(db: og.Database):
 
     # Publish location data
     if state.mqtt_client:
-        state.mqtt_client.publish("location", str(db.inputs.location))
+        # state.mqtt_client.publish("location", str(db.inputs.location))
+        state.mqtt_client.publish("location", "test")
 
     return True
