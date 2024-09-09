@@ -47,6 +47,11 @@ def cleanup(db: og.Database):
     if db.internal_state.mqtt_client:
         db.internal_state.mqtt_client.stop()
 
+def get_action_graph_script_node_state(db: og.Database, path_to_node: str):
+    node = og.get_node_by_path(path_to_node)
+    state = db.per_instance_internal_state(node)
+    return state
+
 def compute(db: og.Database):
     state = db.internal_state
 
@@ -67,17 +72,11 @@ def compute(db: og.Database):
     else:
         db.outputs.is_activate = False
 
-    # Publish location data
+    state_agv = get_action_graph_script_node_state(db, db.inputs.agv_properties_graph_prim_path)
+    print(f"AGV angular: {state_agv.angular})")
+
     if state.mqtt_client:
-        # state.mqtt_client.publish("location", str(db.inputs.location))
-        state.mqtt_client.publish("location", "test")
-
-
-    agv_properties_graph_prim_path = db.inputs.agv_properties_graph_prim_path
-    node = og.get_node_by_path(agv_properties_graph_prim_path)
-    state_agv = db.per_instance_internal_state(node)
-    print(state_agv.angular)
-    
+        state.mqtt_client.publish("angular", str(state_agv.angular))
 
 
     return True
