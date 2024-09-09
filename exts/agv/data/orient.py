@@ -2,6 +2,7 @@ import numpy as np
 
 def setup(db: og.Database):
     state = db.internal_state
+    state.angular = 0
 
 def cleanup(db: og.Database):
     pass
@@ -44,6 +45,6 @@ def compute(db: og.Database):
     rotation_matrix = quaternion_to_rotation_matrix(orient)
     unit_vector = rotation_matrix_to_unit_vector(rotation_matrix)
     angle_deg = unit_vector_to_angular_degree(unit_vector)
-    print(f"angle_deg: {angle_deg}")
+    state.angular = angle_deg
 
     return True
