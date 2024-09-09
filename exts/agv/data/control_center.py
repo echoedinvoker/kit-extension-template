@@ -72,4 +72,12 @@ def compute(db: og.Database):
         # state.mqtt_client.publish("location", str(db.inputs.location))
         state.mqtt_client.publish("location", "test")
 
+
+    agv_properties_graph_prim_path = db.inputs.agv_properties_graph_prim_path
+    node = og.get_node_by_path(agv_properties_graph_prim_path)
+    state_agv = db.per_instance_internal_state(node)
+    print(state_agv.angular)
+    
+
+
     return True

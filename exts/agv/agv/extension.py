@@ -54,13 +54,19 @@ class ActionGraphManager:
                 keys.CREATE_NODES: [
                     ("on_playback_tick", "omni.graph.action.OnPlaybackTick"),
                     ("script_node", "omni.graph.scriptnode.ScriptNode"),
+                    ("AGV_graph_prim_path", "omni.graph.nodes.GetPrimPath"),
+                ],
+                keys.CREATE_ATTRIBUTES: [
+                    ("script_node.inputs:agv_properties_graph_prim_path", "string"),
                 ],
                 keys.SET_VALUES: [
                     ("script_node.inputs:usePath", True),
                     ("script_node.inputs:scriptPath", os.path.join(self._data_path_manager.get_extension_data_path(), "control_center.py")),
+                    ("AGV_graph_prim_path.inputs:prim", "/agv_properties_graph/script_node"),
                 ],
                 keys.CONNECT: [
                     ("on_playback_tick.outputs:tick", "script_node.inputs:execIn"),
+                    ("AGV_graph_prim_path.outputs:path", "script_node.inputs:agv_properties_graph_prim_path")
                 ]
             }
         )
