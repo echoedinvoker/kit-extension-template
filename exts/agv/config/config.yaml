@@ -1,0 +1,9 @@
+---
+test: 123
+arr:
+  - 1
+  - 2
+  - 3
+obj:
+  - user: matt
+    pass: 1234
