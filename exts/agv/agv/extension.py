@@ -4,6 +4,7 @@ import os
 import omni.kit.commands
 from pxr import Gf, UsdGeom
 import omni.graph.core as og
+import yaml
 
 # Functions and vars are available to other extension as usual in python: `example.python_ext.some_public_function(x)`
 def some_public_function(x: int):
@@ -17,9 +18,15 @@ class ExtensionDataPathManager:
     def __init__(self):
         manager = omni.kit.app.get_app().get_extension_manager()
         self.extension_data_path = os.path.join(manager.get_extension_path_by_module("agv"), "data")
+        self.extension_config_path = os.path.join(manager.get_extension_path_by_module("agv"), "config")
 
     def get_extension_data_path(self):
         return self.extension_data_path
+
+    def read_config(self):
+        config_path = os.path.join(self.extension_config_path, 'config.yaml')
+        with open(config_path, 'r') as config_file:
+            return yaml.safe_load(config_file)
 
 class StageManager:
     def __init__(self):
@@ -128,6 +135,10 @@ class MyExtension(omni.ext.IExt):
         self._stage_manager = StageManager()
         self._action_graph_manager = ActionGraphManager(self._data_path_manager)
         self._scene_elements_manager = SceneElementsManager(self._stage_manager, self._data_path_manager)
+
+        # Read and parse the config.yaml file
+        self._config = self._data_path_manager.read_config()
+        print("Loaded configuration:", self._config)
 
         self._window = ui.Window("My Window", width=300, height=300)
         with self._window.frame:
